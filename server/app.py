@@ -7,7 +7,7 @@ from flask_restful import Api, Resource
 from models import db, Newsletter
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newsletters.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newsletters.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
@@ -64,6 +64,8 @@ class Newsletters(Resource):
         )
 
         return response
+    
+    
 
 api.add_resource(Newsletters, '/newsletters')
 
@@ -78,6 +80,33 @@ class NewsletterByID(Resource):
             200,
         )
 
+        return response
+
+    def patch(self, id):
+
+        record= Newsletter.query.filter(Newsletter.id == id).first()
+        for attr in request.form:
+            setattr(record,attr, request.form[attr])
+        db.session.add(record)
+        db.session.commit()
+        response_dict=record.to_dict()
+        response= make_response(
+            response_dict,
+            200
+        )
+        return response 
+    
+    def delete(self,id):
+        record= Newsletter.query.filter(Newsletter.id == id).first()
+
+        db.session.delete(record)
+        db.session.commit()
+
+        response_dict={"message": "record succesfully deleted"}
+        response= make_response(
+            response_dict,
+            200
+        )
         return response
 
 api.add_resource(NewsletterByID, '/newsletters/<int:id>')
